@@ -35,7 +35,7 @@ xeroClient = XeroClient(
     **conf_xero
 )
 
-print len(wcClient.get("products").json())
+print len(wcClient.get("products").json()['products'])
 
 print len(xeroClient.items.all())
 
