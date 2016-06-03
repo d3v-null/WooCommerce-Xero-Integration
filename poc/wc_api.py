@@ -23,6 +23,8 @@ r = wcapi.get("products?filter[meta]=true")
 
 links_str = r.headers.get('link')
 
+print links_str
+
 for link_str in links_str.split(', '):
     print repr(link_str)
 response_json = r.json()

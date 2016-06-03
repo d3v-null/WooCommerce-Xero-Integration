@@ -3,6 +3,8 @@
 
 # from pprint import pprint
 from os import sys, path
+from collections import OrderedDict
+
 
 from woocommerce import API as WCAPI
 from xero import Xero
@@ -28,7 +30,7 @@ class ApiMixin(object):
 
 
 class WcClient(WCAPI, ApiMixin):
-    """Doctsring for WcClient"""
+    """Wraps around the WooCommerce API and provides extra useful methods"""
     kwarg_validations = {
         'consumer_key':[ValidationUtils.not_none],
         'consumer_secret':[ValidationUtils.not_none],
@@ -39,22 +41,74 @@ class WcClient(WCAPI, ApiMixin):
         'core_fields': ['id']
     }
 
-    class WcApiCallIterator(WCAPI):
+    class WcApiPageIterator(WCAPI):
         """Creates an iterator based on a paginated wc api call"""
-        def __init__(self, call_params):
-            r = self.get(**call_params)
-            self.last_response_json = r.json()
-            self.last_header_json = r.headers    
+        def __init__(self, api, endpoint):
+            self.api = api
+            self.last_response = self.api.get(endpoint)
 
+        def __get_endpoint(self, url):
+            api_url = self.api._API__get_url('')
+            if url.startswith(api_url):
+                return url.replace(api_url, '')
 
-    def get_products(self, fields=None):
-        if fields is None:
-            fields = self.default_fields
+        def __iter__(self):
+            return self
 
-        # get first list of products,
+        def next(self):
+            assert self.last_response.status_code not in [404]
+            last_response_json = self.last_response.json()
+            last_response_headers = self.last_response.headers
+            links_str = last_response_headers.get('link', '')
+            for link in SanitationUtils.findall_wc_links(links_str):
+                if link.get('rel') == 'next' and link.get('url'):
+                    self.last_response = self.api.get(
+                        self.__get_endpoint(link['url'])
+                    )
+                    return last_response_json
+            raise StopIteration()
+
+    def get_products(self, params=None):
+        if params is None:
+            params = self.default_fields
+        request_params = OrderedDict()
+        incl_fields = params.get('core_fields', [])
+        extra_fields = []
+        if params.get('meta_fields'):
+            request_params['filter[meta]'] = 'true'
+            extra_fields.append('product_meta')
+        if params.get('core_fields'):
+            request_params['fields'] = ','.join(incl_fields + extra_fields)
+        if params.get('filter_params'):
+            for key, val in params['filter_params'].items():
+                request_params['filter[%s]' % key] = val
+
+        endpoint = 'products'
+        if request_params:
+            endpoint += '?' + '&'.join([
+                key + '=' + val for key, val in request_params.items()
+            ])
+
+        print endpoint
+
+        products = []
+        for page in self.WcApiPageIterator(self, endpoint):
+            if page.get('products'):
+                for page_product in page.get('products'):
+                    product = {}
+                    for field in params.get('core_fields', []):
+                        if field in page_product:
+                            product[field] = page_product[field]
+                    if page_product.get('product_meta'):
+                        page_product_meta = page_product['product_meta']
+                        for meta_field in params.get('meta_fields', []):
+                            if page_product_meta.get(meta_field):
+                                product['meta.'+meta_field] = page_product_meta[meta_field]
+                    products.append(product)
+        return products
 
 class XeroClient(Xero, ApiMixin):
-    """Doctsring for XeroClient"""
+    """Wraps around the Xero API and provides extra useful methods"""
     kwarg_validations = {
         'consumer_key':[ValidationUtils.not_none],
         'consumer_secret':[ValidationUtils.not_none],
@@ -70,4 +124,4 @@ class XeroClient(Xero, ApiMixin):
         super(self.__class__, self).__init__(credentials)
 
     def get_products(self, fields=None):
-        pass
+        return self.items.all()

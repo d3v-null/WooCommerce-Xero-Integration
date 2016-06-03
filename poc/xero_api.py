@@ -21,7 +21,7 @@ with open(conf_xero.get('key_file')) as file_key:
 credentials = PrivateCredentials(conf_xero.get('consumer_key'), rsa_key)
 xero_obj = Xero(credentials)
 
-print len(xero_obj.items.all())
+print (xero_obj.items.all())
 
 # aprons = xero_obj.items.filter(Name='Apron - Cotton Chinese Peony')
 # if aprons:

@@ -1,5 +1,5 @@
 import inspect
-# import re
+import re
 import os
 # from os import path, sys
 
@@ -7,20 +7,28 @@ from kitchen.text import converters
 
 class SanitationUtils(object):
     """Provides utiy methods for sanitizing data"""
+    # url regex by http://daringfireball.net/2010/07/improved_regex_for_matching_urls
     regex_url = \
-        r"https?:\/\/(?:www\.)?" + \
-        r"[-a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-z]{2,6}\b(?:[-a-zA-Z0-9@:%_\+.~#?&//=]*)"
-    regex_wc_link = r"<(?P<url>{0})>; rel=\"(?P<rel>\w+)\"".format(regex_url)
+        ur'(?i)\b((?:https?://|www\d{0,3}[.]|[a-z0-9.\-]+[.][a-z]{2,4}/)'+\
+        ur'(?:[^\s()<>]+|\(([^\s()<>]+|(\([^\s()<>]+\)))*\))+'+\
+        ur'(?:\(([^\s()<>]+|(\([^\s()<>]+\)))*\)|[^\s`!()\[\]{};:\'".,<>?]))'
+    regex_wc_link = ur"<(?P<url>{0})>; rel=\"(?P<rel>\w+)\"".format(regex_url)
 
     @staticmethod
-    def wrap_full_match(regex):
+    def maybe_wrap_full_match(regex):
         """Wraps a given regylar expression so that it encompases a full match"""
-        return r"^{}$".format(regex)
+        if regex[0] == '^' and regex[-1] == '$':
+            return regex
+        else:
+            return r"^{}$".format(regex)
 
     @staticmethod
-    def wrap_paren(regex):
-        """Wraps a given regylar expression in parens"""
-        return r"({})".format(regex)
+    def maybe_wrap_paren(regex):
+        """Wraps a given regular expression in parens if necessary"""
+        if regex[0] == '(' and regex[-1] == ')':
+            return regex
+        else:
+            return r"({})".format(regex)
 
     @classmethod
     def coerce_unicode(cls, thing):
@@ -36,9 +44,25 @@ class SanitationUtils(object):
         return unicode_return
 
     @classmethod
-    def findall_wc_link(cls, string):
+    def coerce_bytestr(cls, thing):
+        unicode_thing = cls.coerce_unicode(thing)
+        byte_return = converters.to_bytes(unicode_thing, "utf8")
+        assert isinstance(byte_return, str), "something went wrong, should return str not %s" % type(byte_return)
+        return byte_return
+
+    @classmethod
+    def findall_wc_links(cls, string):
         """Finds all wc style link occurences in a given string"""
-        pass
+        matches = []
+        for line in string.split(', '):
+            match = re.match(cls.regex_wc_link, line)
+            if match is None:
+                continue
+            match_dict = match.groupdict()
+            if 'url' in match_dict and 'rel' in match_dict:
+                matches.append(match_dict)
+        return matches
+
 
 class ValidationUtils(object):
     """Provides utiy methods for validating data"""
@@ -83,7 +107,7 @@ class DebugUtils(object):
         """Registers a message with any severity and prints if verbose enough"""
         if severity is None:
             severity = cls.MESSAGE_VERBOSITY
-        print cls.get_procedure(), message
+        print map(SanitationUtils.coerce_bytestr, [cls.get_caller_procedure(), message])
 
     @classmethod
     def register_error(cls, message):
