@@ -2,6 +2,7 @@ import inspect
 import re
 import os
 # from os import path, sys
+import time
 
 from kitchen.text import converters
 
@@ -47,8 +48,25 @@ class SanitationUtils(object):
     def coerce_bytestr(cls, thing):
         unicode_thing = cls.coerce_unicode(thing)
         byte_return = converters.to_bytes(unicode_thing, "utf8")
-        assert isinstance(byte_return, str), "something went wrong, should return str not %s" % type(byte_return)
+        assert \
+            isinstance(byte_return, str), \
+            "something went wrong, should return str not %s" % type(byte_return)
         return byte_return
+
+    @classmethod
+    def coerce_ascii(cls, thing):
+        unicode_thing = cls.coerce_unicode(thing)
+        ascii_return = converters.to_bytes(unicode_thing, "ascii", "backslashreplace")
+        assert \
+            isinstance(ascii_return, str), \
+            "something went wrong, should return str not %s" % type(ascii_return)
+        return ascii_return
+
+    @classmethod
+    def sanitize_container_value(cls, thing):
+        if isinstance(thing, str):
+            thing = SanitationUtils.coerce_unicode(thing)
+        return thing
 
     @classmethod
     def findall_wc_links(cls, string):
@@ -107,9 +125,49 @@ class DebugUtils(object):
         """Registers a message with any severity and prints if verbose enough"""
         if severity is None:
             severity = cls.MESSAGE_VERBOSITY
-        print map(SanitationUtils.coerce_bytestr, [cls.get_caller_procedure(), message])
+        print [
+            SanitationUtils.coerce_bytestr(x) for x in \
+            [cls.get_caller_procedure(), message]
+        ]
 
     @classmethod
     def register_error(cls, message):
         """Registers a message with warning severity and prints if verbose enough"""
         cls.register_message(message, cls.ERROR_VERBOSITY)
+
+class ProgressCounter(object):
+    def __init__(self, total, printThreshold=1):
+        self.total = total
+        self.printThreshold = printThreshold
+        self.last_print = time.time()
+
+    def maybe_print_update(self, count):
+        now = time.time()
+        if now - self.last_print > 1:
+            self.last_print = now
+            percentage = 0
+            if self.total > 0:
+                percentage = 100 * count / self.total
+            DebugUtils.register_message(
+                "({: >3}%%) {: >10} of {: >10} items processed".format(percentage, count, self.total)
+            )
+
+class DescriptorUtils:
+    """Provides methods for creating properties and descriptors"""
+    @staticmethod
+    def safe_key_property(key_attr):
+        def getter(self):
+            assert hasattr(self, key_attr), "does not have attr: {}".format(key_attr)
+            key = getattr(self, key_attr)
+            assert key in self.keys(), "{} must be set before get".format(key)
+            return self[key]
+
+        def setter(self, value):
+            assert hasattr(self, key_attr), "does not have attr: {}".format(key_attr)
+            key = getattr(self, key_attr)
+            assert \
+                isinstance(value, (str, unicode)), \
+                "{} must be set with string not {}".format(key, type(value))
+            self[key] = value
+
+        return property(getter, setter)

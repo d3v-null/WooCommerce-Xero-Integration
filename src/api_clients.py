@@ -82,8 +82,15 @@ class WcClient(WCAPI, ApiMixin):
         if params.get('filter_params'):
             for key, val in params['filter_params'].items():
                 request_params['filter[%s]' % key] = val
+        for key in ['per_page', 'search', 'slug', 'sku']:
+            if params.get(key):
+                request_params[key] = SanitationUtils.coerce_ascii(params[key])
 
         endpoint = 'products'
+        if params.get('id'):
+            _id = params['id']
+            assert isinstance(_id, int), "id must be an int"
+            endpoint += '/%d' % _id
         if request_params:
             endpoint += '?' + '&'.join([
                 key + '=' + val for key, val in request_params.items()
@@ -92,6 +99,13 @@ class WcClient(WCAPI, ApiMixin):
         print endpoint
 
         products = []
+
+        if params.get('id'):
+            response = self.get(endpoint)
+            product = response.json().get('product')
+            products.append(product)
+            return products
+
         for page in self.WcApiPageIterator(self, endpoint):
             if page.get('products'):
                 for page_product in page.get('products'):
@@ -105,7 +119,16 @@ class WcClient(WCAPI, ApiMixin):
                             if page_product_meta.get(meta_field):
                                 product['meta.'+meta_field] = page_product_meta[meta_field]
                     products.append(product)
+            elif params.get('id'):
+                print page
+                products.append(page)
+                break
         return products
+
+    def update_product(self, _id, data):
+        assert isinstance(_id, int), "id must be int"
+        assert isinstance(data, dict), "data must be dict"
+        return self.put("products/%d" % _id, data).json()
 
 class XeroClient(Xero, ApiMixin):
     """Wraps around the Xero API and provides extra useful methods"""
