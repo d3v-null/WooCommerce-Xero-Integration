@@ -26,10 +26,10 @@ download_xero = True
 
 update_wc = False
 
-# update_wc = True
+update_wc = True
 
 dir_conf = 'conf'
-path_conf_wc = os.path.join(dir_conf, 'wc_api.yaml')
+path_conf_wc = os.path.join(dir_conf, 'wc_api_test.yaml')
 with open(path_conf_wc) as file_conf_wc:
     conf_wc = yaml.load(file_conf_wc)
     for key in ['consumer_key', 'consumer_secret', 'url']:
@@ -66,7 +66,7 @@ if download_wc:
         #     'search':'Apron'
         # },
         # 'search':'Apron',
-        'id':10481,
+        # 'id':10481,
         # 'sku':'BOBB#MC',
         'per_page': 300
     })
@@ -230,10 +230,10 @@ print tabulate(new_data)
 
 if update_wc:
     for product in new_wc_products:
-        data = OrderedDict([
+        data = {"product": OrderedDict([
             (WC_API_Product.stock_level_key, product.stock_level),
             (WC_API_Product.stock_status_key, product.stock_status),
-        ])
+        ])}
 
         print wcClient.update_product(product.pid, data)
 
