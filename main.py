@@ -30,20 +30,6 @@ def main():
     xero_config_file = 'xero_api.yaml'
     wc_config_file = 'wc_api_test.yaml'
 
-    dir_conf = 'conf'
-    path_conf_wc = os.path.join(dir_conf, 'wc_api_test.yaml')
-    with open(path_conf_wc) as file_conf_wc:
-        conf_wc = yaml.load(file_conf_wc)
-        for key in ['consumer_key', 'consumer_secret', 'url']:
-            assert key in conf_wc, key
-
-    path_conf_xero = os.path.join(dir_conf, 'xero_api.yaml')
-    with open(path_conf_xero) as file_conf_xero:
-        conf_xero = yaml.load(file_conf_xero)
-        for key in ['consumer_key', 'consumer_secret', 'key_file']:
-            assert key in conf_xero, key
-
-
     parser = argparse.ArgumentParser(description = 'Merge products between Xero and WC')
     group = parser.add_mutually_exclusive_group()
     group.add_argument("-v", "--verbosity", action="count",
@@ -84,6 +70,18 @@ def main():
         if args.wc_config_file is not None:
             wc_config_file = args.wc_config_file
 
+    dir_conf = 'conf'
+    path_conf_wc = os.path.join(dir_conf, wc_config_file)
+    with open(path_conf_wc) as file_conf_wc:
+        conf_wc = yaml.load(file_conf_wc)
+        for key in ['consumer_key', 'consumer_secret', 'url']:
+            assert key in conf_wc, key
+
+    path_conf_xero = os.path.join(dir_conf, xero_config_file)
+    with open(path_conf_xero) as file_conf_xero:
+        conf_xero = yaml.load(file_conf_xero)
+        for key in ['consumer_key', 'consumer_secret', 'key_file']:
+            assert key in conf_xero, key
 
     wcClient = WcClient(
         **conf_wc

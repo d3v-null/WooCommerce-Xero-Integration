@@ -96,7 +96,8 @@ class WcClient(WCAPI, ApiMixin):
                 key + '=' + val for key, val in request_params.items()
             ])
 
-        print endpoint
+        print self._API__get_url(endpoint)
+        # print endpoint
 
         products = []
 
