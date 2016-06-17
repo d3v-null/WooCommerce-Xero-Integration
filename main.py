@@ -14,9 +14,6 @@ from src.utils import SanitationUtils, DebugUtils
 from src.api_clients import WcClient, XeroClient
 from src.containers import Xero_API_Product, WC_API_Product
 
-if __name__ == '__main__':
-    main()
-
 def main():
     dir_module = os.path.dirname(sys.argv[0])
     if dir_module:
@@ -279,3 +276,6 @@ def main():
             print wcClient.update_product(product.pid, data)
     else:
         print "not updating"
+
+if __name__ == '__main__':
+    main()
