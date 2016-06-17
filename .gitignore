@@ -66,3 +66,5 @@ conf/wc_api.yaml
 conf/xero_api.yaml
 
 conf/wc_api_test.yaml
+conf/privatekey.pem
+conf/publickey.cer
