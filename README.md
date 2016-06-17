@@ -12,3 +12,9 @@ Copy the client key and secret from the api manager into a copy of the example x
 
 Follow instructions for generating your client key / secret pair from WooCommerce
 Copy the client key and secret from the WooCommerce into a copy of the example wc yaml config file along with the store url
+
+### Set up Application dependencies
+
+Install python 2.7, then install the following dependencies using pip2
+
+tabulate kitchen woocommerce pyxero

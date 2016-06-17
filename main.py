@@ -6,6 +6,7 @@ from collections import OrderedDict
 # from woocommerce import API as WCAPI
 # from pprint import pprint
 from tabulate import tabulate
+import argparse
 
 if __name__ == '__main__' and __package__ is None:
     sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
@@ -17,16 +18,16 @@ dir_module = os.path.dirname(sys.argv[0])
 if dir_module:
     os.chdir(dir_module)
 
+#default arguments
 
 download_wc = False
 download_xero = False
-
 download_wc = True
 download_xero = True
-
 update_wc = False
-
 update_wc = True
+xero_config_file = 'xero_api.yaml'
+wc_config_file = 'wc_api_test.yaml'
 
 dir_conf = 'conf'
 path_conf_wc = os.path.join(dir_conf, 'wc_api_test.yaml')
@@ -40,6 +41,47 @@ with open(path_conf_xero) as file_conf_xero:
     conf_xero = yaml.load(file_conf_xero)
     for key in ['consumer_key', 'consumer_secret', 'key_file']:
         assert key in conf_xero, key
+
+
+parser = argparse.ArgumentParser(description = 'Merge products between Xero and WC')
+group = parser.add_mutually_exclusive_group()
+group.add_argument("-v", "--verbosity", action="count",
+                    help="increase output verbosity")
+group.add_argument("-q", "--quiet", action="store_true")
+group = parser.add_mutually_exclusive_group()
+group.add_argument('--download-xero', help='download the xero data',
+                   action="store_true", default=None)
+group.add_argument('--skip-download-xero', help='use the local xero file instead\
+    of downloading the xero data', action="store_false", dest='download_xero')
+group = parser.add_mutually_exclusive_group()
+group.add_argument('--download-wc', help='download the wc data',
+                   action="store_true", default=None)
+group.add_argument('--skip-download-wc', help='use the local wc file instead\
+    of downloading the wc data', action="store_false", dest='download_wc')
+group = parser.add_mutually_exclusive_group()
+group.add_argument('--update-wc', help='update the wc database',
+                   action="store_true", default=None)
+group.add_argument('--skip-update-wc', help='don\'t update the wc database',
+                   action="store_false", dest='update_wc')
+parser.add_argument('--xero-config-file', help='location of xero config file')
+parser.add_argument('--wc-config-file', help='location of wc config file')
+args = parser.parse_args()
+
+if args:
+    if args.verbosity > 0:
+        DebugUtils.CURRENT_VERBOSITY = args.verbosity
+    elif args.quiet:
+        DebugUtils.CURRENT_VERBOSITY = 0
+    if args.download_wc is not None:
+        download_wc = args.download_wc
+    if args.download_xero is not None:
+        download_xero = args.download_xero
+    if args.update_wc is not None:
+        update_wc = args.update_wc
+    if args.xero_config_file is not None:
+        xero_config_file = args.xero_config_file
+    if args.wc_config_file is not None:
+        wc_config_file = args.wc_config_file
 
 
 wcClient = WcClient(
@@ -62,12 +104,6 @@ if download_wc:
             # 'status',
         ],
         'meta_fields': ['MYOB SKU'],
-        # 'filter_params': {
-        #     'search':'Apron'
-        # },
-        # 'search':'Apron',
-        # 'id':10481,
-        # 'sku':'BOBB#MC',
         'per_page': 300
     })
 else:
@@ -87,8 +123,7 @@ else:
         {'Code':'c', 'QuantityOnHand':0.0, 'IsTrackedAsInventory':True}
     ]
 
-print "xero_products:", len(xero_products)
-
+DebugUtils.register_message( "xero_products: %s" % (len(xero_products)) )
 
 #group xero products by sku
 xero_sku_groups = {}
@@ -98,10 +133,12 @@ for xero_product_data in xero_products:
     xero_sku = xero_product.sku
     xero_stock = xero_product.stock_level
     xero_id = xero_product.pid
-    print " ".join(
+
+    DebugUtils.register_message( " ".join(
         SanitationUtils.coerce_ascii(x) for x in \
         [ "processing xero", xero_id, xero_name, xero_sku, xero_stock]
-    )
+    ) )
+
     if xero_sku:
         xero_sku_groups[xero_sku] = [
             prod for prod in \
@@ -117,10 +154,10 @@ for wc_product_data in wc_products:
     wc_sku = wc_product.sku
     wc_stock = wc_product.stock_level
     wc_id = wc_product.pid
-    print " ".join(
+    DebugUtils.register_message( " ".join(
         SanitationUtils.coerce_ascii(x) for x in \
         ["processing wc", wc_id, wc_name, wc_sku, wc_stock]
-    )
+    ) )
     if wc_sku:
         wc_sku_groups[wc_sku] = [
             prod for prod in \

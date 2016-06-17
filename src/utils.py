@@ -109,6 +109,7 @@ class DebugUtils(object):
     ERROR_VERBOSITY = 1
     WARNING_VERBOSITY = 2
     MESSAGE_VERBOSITY = 3
+    CURRENT_VERBOSITY = 1
 
     @staticmethod
     def get_procedure():
@@ -125,10 +126,11 @@ class DebugUtils(object):
         """Registers a message with any severity and prints if verbose enough"""
         if severity is None:
             severity = cls.MESSAGE_VERBOSITY
-        print [
-            SanitationUtils.coerce_bytestr(x) for x in \
-            [cls.get_caller_procedure(), message]
-        ]
+        if severity <= cls.CURRENT_VERBOSITY:
+            print [
+                SanitationUtils.coerce_bytestr(x) for x in \
+                [cls.get_caller_procedure(), message]
+            ]
 
     @classmethod
     def register_error(cls, message):
