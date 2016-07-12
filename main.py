@@ -100,7 +100,7 @@ def main():
         wc_products = wcClient.get_products({
             'core_fields': [
                 WC_API_Product.id_key,
-                WC_API_Product.stock_tracked_key,
+                WC_API_Product.managing_stock_key,
                 WC_API_Product.stock_level_key,
                 WC_API_Product.stock_status_key,
                 WC_API_Product.second_sku_key,
@@ -122,8 +122,12 @@ def main():
     for wc_product in wc_products:
         wc_sku = wc_product.get(WC_API_Product.sku_key)
         wc_second_sku = wc_product.get(WC_API_Product.second_sku_key)
+        wc_managing_stock = wc_product.get(WC_API_Product.managing_stock_key)
+        wc_stock_level = wc_product.get(WC_API_Product.stock_level_key)
+        if not wc_managing_stock and wc_stock_level < 5:
+            print 'not tracked:', wc_sku
         if wc_sku != wc_second_sku:
-            print wc_sku, wc_second_sku
+            print 'not the same:', wc_sku, wc_second_sku
 
     if report_and_quit:
         quit()
@@ -146,6 +150,7 @@ def main():
         xero_sku = xero_product.sku
         xero_stock = xero_product.stock_level
         xero_id = xero_product.pid
+        xero_managing_stock = xero_product.managing_stock
 
         DebugUtils.register_message( " ".join(
             SanitationUtils.coerce_ascii(x) for x in \
@@ -213,8 +218,8 @@ def main():
             continue
         wc_product = matched_wc_products[0]
         xero_product = matched_xero_products[0]
-        if not wc_product.managing_stock or not xero_product.managing_stock:
-            skip_matches.append(match)
+        if wc_product.managing_stock != xero_product.managing_stock:
+            delta_matches.append(match)
             continue
         try:
             for product in wc_product, xero_product:
@@ -229,34 +234,38 @@ def main():
                                      repr(xero_product.get('QuantityOnHand'))]))
             )
             continue
-        if wc_stock == xero_stock:
-            good_matches.append(match)
-            continue
-        else:
+        if wc_stock != xero_stock:
             delta_matches.append(match)
-            # print "delta match:", match
-            wc_name = wc_product.title
-            xero_name = xero_product.title
-            delta_row = [
-                SanitationUtils.coerce_ascii(cell) for cell in\
-                [wc_product, wc_product.stock_level, \
-                 xero_product, xero_product.stock_level]
-            ]
-            delta_data.append(delta_row)
+            continue
+        good_matches.append(match)
 
-            new_wc_product = copy(wc_product)
-            new_wc_product.stock_level = xero_product.stock_level
-            new_wc_products.append(new_wc_product)
+    for delta_match in delta_matches:
+        wc_product = delta_match[0][0]
+        xero_product = delta_match[1][0]
+        wc_name = wc_product.title
+        xero_name = xero_product.title
+        delta_row = [
+            SanitationUtils.coerce_ascii(cell) for cell in\
+            [wc_product, wc_product.stock_level, wc_product.managing_stock, \
+             xero_product, xero_product.stock_level, xero_product.managing_stock]
+        ]
+        delta_data.append(delta_row)
 
-            new_data.append([
-                SanitationUtils.coerce_ascii(x) for x in \
-                [new_wc_product, new_wc_product.stock_level, new_wc_product.stock_status]
-            ])
+        new_wc_product = copy(wc_product)
+        new_wc_product.stock_level = xero_product.stock_level
+        new_wc_product.managing_stock = xero_product.managing_stock
+        new_wc_products.append(new_wc_product)
 
-            # DebugUtils.register_message(
-            #     ' '.join((SanitationUtils.coerce_unicode(x) for x in \
-            #     ["changing", wc_name, xero_name, wc_stock, xero_stock]))
-            # )
+        new_data.append([
+            SanitationUtils.coerce_ascii(x) for x in \
+            [new_wc_product, new_wc_product.stock_level,
+             new_wc_product.stock_status, new_wc_product.managing_stock]
+        ])
+
+        # DebugUtils.register_message(
+        #     ' '.join((SanitationUtils.coerce_unicode(x) for x in \
+        #     ["changing", wc_name, xero_name, wc_stock, xero_stock]))
+        # )
 
     print "good", len(good_matches)
     print "bad", len(bad_matches)
@@ -283,6 +292,7 @@ def main():
             data = {"product": OrderedDict([
                 (WC_API_Product.stock_level_key, product.stock_level),
                 (WC_API_Product.stock_status_key, product.stock_status),
+                (WC_API_Product.managing_stock_key, product.managing_stock)
             ])}
 
             print wcClient.update_product(product.pid, data)
