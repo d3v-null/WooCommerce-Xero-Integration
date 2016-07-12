@@ -4,7 +4,7 @@ import yaml
 from copy import copy
 from collections import OrderedDict
 # from woocommerce import API as WCAPI
-# from pprint import pprint
+from pprint import pprint
 from tabulate import tabulate
 import argparse
 
@@ -29,6 +29,7 @@ def main():
     update_wc = True
     xero_config_file = 'xero_api.yaml'
     wc_config_file = 'wc_api_test.yaml'
+    report_and_quit = False
 
     parser = argparse.ArgumentParser(description = 'Merge products between Xero and WC')
     group = parser.add_mutually_exclusive_group()
@@ -47,6 +48,8 @@ def main():
         of downloading the wc data', action="store_false", dest='download_wc')
     group = parser.add_mutually_exclusive_group()
     group.add_argument('--update-wc', help='update the wc database',
+                       action="store_true", default=None)
+    group.add_argument('--report-and-quit', help='report wc data and quit',
                        action="store_true", default=None)
     group.add_argument('--skip-update-wc', help='don\'t update the wc database',
                        action="store_false", dest='update_wc')
@@ -69,6 +72,8 @@ def main():
             xero_config_file = args.xero_config_file
         if args.wc_config_file is not None:
             wc_config_file = args.wc_config_file
+        if args.report_and_quit is not None:
+            report_and_quit = args.report_and_quit
 
     dir_conf = 'conf'
     path_conf_wc = os.path.join(dir_conf, wc_config_file)
@@ -112,7 +117,16 @@ def main():
             {'id': 3, 'sku':'c', 'title':'C', 'stock_quantity': 3, 'managing_stock': True}]
 
     print "wc products:", len(wc_products)
-    # pprint(wc_products)
+    pprint(wc_products)
+    tabulate(wc_products)
+    for wc_product in wc_products:
+        wc_sku = wc_product.get(WC_API_Product.sku_key)
+        wc_second_sku = wc_product.get(WC_API_Product.second_sku_key)
+        if wc_sku != wc_second_sku:
+            print wc_sku, wc_second_sku
+
+    if report_and_quit:
+        quit()
 
     if download_xero:
         xero_products = xeroClient.get_products()
