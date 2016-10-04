@@ -13,13 +13,13 @@ if __name__ == '__main__' and __package__ is None:
 from src.api_clients import *
 from src.containers import API_Product, WC_API_Product
 
-class TestSanitationUtils(TestCase):
+class TestProductClient(TestCase):
     def setUp(self):
         dir_parent = os.path.dirname(os.path.dirname(sys.argv[0]))
         if dir_parent:
             os.chdir(dir_parent)
         dir_conf = 'conf'
-        path_conf_wc = os.path.join(dir_conf, 'wc_api_test.yaml')
+        path_conf_wc = os.path.join(dir_conf, 'wc_api_test_local.yaml')
         with open(path_conf_wc) as file_conf_wc:
             conf_wc = yaml.load(file_conf_wc)
             for key in ['consumer_key', 'consumer_secret', 'url']:
@@ -31,7 +31,7 @@ class TestSanitationUtils(TestCase):
         wc_products = self.client.get_products({
             'core_fields': [
                 WC_API_Product.id_key,
-                WC_API_Product.stock_tracked_key,
+                WC_API_Product.managing_stock_key,
                 WC_API_Product.stock_level_key,
                 WC_API_Product.stock_status_key,
                 WC_API_Product.second_sku_key,
@@ -62,5 +62,5 @@ class TestSanitationUtils(TestCase):
 if __name__ == '__main__':
     main()
     # testSuite = unittest.TestSuite()
-    # testSuite.addTest(TestSanitationUtils('test_update_product'))
+    # testSuite.addTest(TestProductClient('test_update_product'))
     # unittest.TextTestRunner().run(testSuite)

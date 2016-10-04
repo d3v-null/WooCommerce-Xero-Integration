@@ -30,7 +30,8 @@ class ApiMixin(object):
 
 
 class WcClient(WCAPI, ApiMixin):
-    """Wraps around the WooCommerce API and provides extra useful methods"""
+    """Wraps around the WooCommerce API and provides extra useful methods
+    TODO: Does this really need to inherid from WCAPI?"""
     kwarg_validations = {
         'consumer_key':[ValidationUtils.not_none],
         'consumer_secret':[ValidationUtils.not_none],

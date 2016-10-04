@@ -80,7 +80,7 @@ class WC_API_Product(API_Product):
 
     @API_Product.stock_level.setter
     def stock_level(self, value):
-        assert isinstance(value, (int, float)), "value must be int or float"
+        assert isinstance( value, (int, float) ), "value must be int or float"
         self[self.stock_level_key] = value
         self.refresh_stock_status()
 
