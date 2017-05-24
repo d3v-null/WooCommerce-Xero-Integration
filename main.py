@@ -119,17 +119,17 @@ def main():
     print "wc products:", len(wc_products)
     pprint(wc_products)
     tabulate(wc_products)
-    for wc_product in wc_products:
-        wc_sku = wc_product.get(WC_API_Product.sku_key)
-        wc_second_sku = wc_product.get(WC_API_Product.second_sku_key)
-        wc_managing_stock = wc_product.get(WC_API_Product.managing_stock_key)
-        wc_stock_level = wc_product.get(WC_API_Product.stock_level_key)
-        if not wc_managing_stock and wc_stock_level < 5:
-            print 'not tracked:', wc_sku
-        if wc_sku != wc_second_sku:
-            print 'not the same:', wc_sku, wc_second_sku
 
     if report_and_quit:
+        for wc_product in wc_products:
+            wc_sku = wc_product.get(WC_API_Product.sku_key)
+            wc_second_sku = wc_product.get(WC_API_Product.second_sku_key)
+            wc_managing_stock = wc_product.get(WC_API_Product.managing_stock_key)
+            wc_stock_level = wc_product.get(WC_API_Product.stock_level_key)
+            if not wc_managing_stock and wc_stock_level < 5:
+                print 'not tracked:', wc_sku
+            if wc_sku != wc_second_sku:
+                print 'not the same:', wc_sku, wc_second_sku
         quit()
 
     if download_xero:

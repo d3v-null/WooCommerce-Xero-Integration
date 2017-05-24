@@ -1,0 +1,5 @@
+kitchen==1.2.4
+tabulate==0.7.7
+woocommerce==1.2.1
+PyYAML==3.12
+pyxero

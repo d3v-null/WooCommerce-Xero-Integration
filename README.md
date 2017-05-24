@@ -15,6 +15,8 @@ Copy the client key and secret from the WooCommerce into a copy of the example w
 
 ### Set up Application dependencies
 
-Install python 2.7, then install the following dependencies using pip2
+Install python2, then install the dependencies with pip2:
 
-tabulate kitchen woocommerce pyxero
+```
+pip2 install -r requirements.txt
+```
