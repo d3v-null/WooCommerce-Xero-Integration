@@ -71,3 +71,4 @@ conf/publickey.cer
 results.txt
 
 conf/wc_api_test_local.yaml
+*.csv
