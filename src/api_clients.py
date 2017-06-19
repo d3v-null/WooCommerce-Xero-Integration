@@ -67,20 +67,19 @@ class WpClient(ApiMixin):
             return self
 
         def next(self):
-            # print "last_response:", self.last_response, repr(self.last_response.request.url), repr(self.last_response.content)
             if int(self.last_response.status_code) not in [200]:
                 raise UserWarning("request failed with %s: %s -> %s" % (
-                        self.last_response.status_code,
-                        repr(self.last_response.request.url),
-                        repr(self.last_response.content)
-                    ))
+                    self.last_response.status_code,
+                    repr(self.last_response.request.url),
+                    repr(self.last_response.content)
+                ))
             last_response_json = self.last_response.json()
             last_response_headers = self.last_response.headers
             # print "headers", last_response_headers
             links_str = last_response_headers.get('link', '')
             for link in SanitationUtils.findall_wc_links(links_str):
                 if link.get('rel') == 'next' and link.get('url'):
-                    self.last_response = self.api.get( link['url'] )
+                    self.last_response = self.api.get(link['url'])
                     return last_response_json
             raise StopIteration()
 
@@ -88,7 +87,7 @@ class WpClient(ApiMixin):
         if params is None:
             params = {}
         request_params = OrderedDict()
-        incl_fields = params.get('core_fields', [])
+        # incl_fields = params.get('core_fields', [])
         extra_fields = []
         if params.get('meta_fields'):
             # request_params['filter[meta]'] = 'true'
@@ -223,7 +222,7 @@ class WcClient(WCAPI, ApiMixin):
                 key + '=' + val for key, val in request_params.items()
             ])
 
-        print self._API__get_url(endpoint)
+        # print self._API__get_url(endpoint)
         # print endpoint
 
         products = []

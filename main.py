@@ -14,7 +14,7 @@ import argparse
 
 if __name__ == '__main__' and __package__ is None:
     sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
-from src.utils import SanitationUtils, DebugUtils
+from src.utils import SanitationUtils, DebugUtils, ProgressCounter
 from src.api_clients import WcClient, XeroClient, WpClient
 from src.containers import XeroProduct, WCProduct, WCAPIProduct, WCCSVProduct
 
@@ -340,7 +340,11 @@ def main():
                 ])
 
     if args.update_wc:
-        for product in new_wc_products:
+        update_progress_counter = ProgressCounter(len(new_wc_products))
+        DebugUtils.register_message("Updating WC")
+
+        for count, product in enumerate(new_wc_products):
+            update_progress_counter.maybe_print_update(count)
             data = {"product": OrderedDict([
                 (WCAPIProduct.stock_level_key, product.stock_level),
                 (WCAPIProduct.stock_status_key, product.stock_status),
@@ -351,12 +355,17 @@ def main():
             try:
                 response = wc_client.update_product(product.pid, data)
             except ReadTimeout as e:
-                print "request timed out, trying again after a short break"
+                DebugUtils.register_warning(
+                    "request timed out, trying again after a short break"
+                )
                 sleep(10)
                 try:
                     response = wc_client.update_product(product.pid, data)
                 except ReadTimeout as e:
-                    print "!!! API keeps timing out, please try again later"
+                    DebugUtils.register_error(
+                        ("!!! API keeps timing out, "
+                         "please try again later or manually upload the CSV file")
+                    )
                     quit()
             finally:
                 DebugUtils.register_message("API responeded :%s" % response)
