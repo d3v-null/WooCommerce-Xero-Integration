@@ -5,6 +5,9 @@
 from os import sys, path
 from collections import OrderedDict
 
+import wordpress
+from wordpress import API as WPAPI
+from wordpress.helpers import UrlUtils
 
 from woocommerce import API as WCAPI
 from xero import Xero
@@ -29,9 +32,122 @@ class ApiMixin(object):
         raise NotImplementedError("get_products not implemented")
 
 
+class WpClient(ApiMixin):
+    """Wraps around the wordpress API and provides extra useful methods"""
+    kwarg_validations = {
+        'consumer_key':[ValidationUtils.not_none],
+        'consumer_secret':[ValidationUtils.not_none],
+        'url':[ValidationUtils.is_url],
+        'basic_auth':True
+        # 'wp_user':[ValidationUtils.not_none],
+        # 'wp_pass':[ValidationUtils.not_none],
+        # 'callback':[ValidationUtils.not_none],
+    }
+
+    page_nesting = True
+
+    def __init__(self, *args, **kwargs):
+        self.validate_kwargs(**kwargs)
+        api_args = {
+            'version':'v3',
+            'api':'wc-api'
+        }
+        for key in ['consumer_key', 'consumer_secret', 'url']:
+            api_args[key] = kwargs.get(key)
+        self.api = WPAPI(**api_args)
+
+
+    class WpApiPageIterator(WPAPI):
+        """Creates an iterator based on a paginated wc api call"""
+        def __init__(self, api, endpoint):
+            self.api = api
+            self.last_response = self.api.get(endpoint)
+
+        def __iter__(self):
+            return self
+
+        def next(self):
+            # print "last_response:", self.last_response, repr(self.last_response.request.url), repr(self.last_response.content)
+            if int(self.last_response.status_code) not in [200]:
+                raise UserWarning("request failed with %s: %s -> %s" % (
+                        self.last_response.status_code,
+                        repr(self.last_response.request.url),
+                        repr(self.last_response.content)
+                    ))
+            last_response_json = self.last_response.json()
+            last_response_headers = self.last_response.headers
+            # print "headers", last_response_headers
+            links_str = last_response_headers.get('link', '')
+            for link in SanitationUtils.findall_wc_links(links_str):
+                if link.get('rel') == 'next' and link.get('url'):
+                    self.last_response = self.api.get( link['url'] )
+                    return last_response_json
+            raise StopIteration()
+
+    def get_products(self, params=None):
+        if params is None:
+            params = {}
+        request_params = OrderedDict()
+        incl_fields = params.get('core_fields', [])
+        extra_fields = []
+        if params.get('meta_fields'):
+            # request_params['filter[meta]'] = 'true'
+            extra_fields.append('product_meta')
+        # if params.get('core_fields'):
+            # request_params['fields'] = ','.join(incl_fields + extra_fields)
+        for key in ['per_page', 'search', 'slug', 'sku']:
+            if params.get(key):
+                request_params[key] = SanitationUtils.coerce_ascii(params[key])
+
+        endpoint = 'products'
+        if params.get('id'):
+            _id = params['id']
+            assert isinstance(_id, int), "id must be an int"
+            endpoint += '/%d' % _id
+        if request_params:
+            endpoint += '?' + '&'.join([
+                key + '=' + val for key, val in request_params.items()
+            ])
+
+        print "endpoint is", endpoint
+
+        products = []
+
+        if params.get('id'):
+            response = self.api.get(endpoint)
+            product = response.json().get('product')
+            products.append(product)
+            return products
+
+        for page in self.WpApiPageIterator(self.api, endpoint):
+            # print "page:", page
+            if page.get('products'):
+                for page_product in page.get('products'):
+                    # print "page_product: ", page_product
+                    product = {}
+                    for field in params.get('core_fields', []):
+                        if field in page_product:
+                            product[field] = page_product[field]
+                    if page_product.get('product_meta'):
+                        page_product_meta = page_product['product_meta']
+                        for meta_field in params.get('meta_fields', []):
+                            if page_product_meta.get(meta_field):
+                                product['meta.'+meta_field] = page_product_meta[meta_field]
+                    products.append(product)
+            elif params.get('id'):
+                print page
+                products.append(page)
+                break
+        return products
+
+    def update_product(self, _id, data):
+        assert isinstance(_id, int), "id must be int"
+        assert isinstance(data, dict), "data must be dict"
+        return self.put("products/%d" % _id, data).json()
+
 class WcClient(WCAPI, ApiMixin):
-    """Wraps around the WooCommerce API and provides extra useful methods
-    TODO: Does this really need to inherid from WCAPI?"""
+    """Wraps around the WooCommerce API and provides extra useful methods"""
+
     kwarg_validations = {
         'consumer_key':[ValidationUtils.not_none],
         'consumer_secret':[ValidationUtils.not_none],
@@ -41,6 +157,10 @@ class WcClient(WCAPI, ApiMixin):
     default_fields = {
         'core_fields': ['id']
     }
+
+    def __init__(self, *args, **kwargs):
+        self.validate_kwargs(**kwargs)
+        super(WcClient, self).__init__(*args, **kwargs)
 
     class WcApiPageIterator(WCAPI):
         """Creates an iterator based on a paginated wc api call"""
@@ -59,6 +179,12 @@ class WcClient(WCAPI, ApiMixin):
         def next(self):
             assert self.last_response.status_code not in [404]
             last_response_json = self.last_response.json()
+            print "last_response:", self.last_response, self.last_response.text
+            if int(self.last_response.status_code) not in [200]:
+                raise UserWarning("request failed with %s: %s" % (
+                    self.last_response.status_code,
+                    self.last_response.text
+                ))
             last_response_headers = self.last_response.headers
             links_str = last_response_headers.get('link', '')
             for link in SanitationUtils.findall_wc_links(links_str):

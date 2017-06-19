@@ -11,7 +11,7 @@ import argparse
 if __name__ == '__main__' and __package__ is None:
     sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
 from src.utils import SanitationUtils, DebugUtils
-from src.api_clients import WcClient, XeroClient
+from src.api_clients import WcClient, XeroClient, WpClient
 from src.containers import Xero_API_Product, WC_API_Product
 
 def main():
@@ -88,7 +88,7 @@ def main():
         for key in ['consumer_key', 'consumer_secret', 'key_file']:
             assert key in conf_xero, key
 
-    wcClient = WcClient(
+    wcClient = WpClient(
         **conf_wc
     )
 
@@ -129,7 +129,7 @@ def main():
             if not wc_managing_stock and wc_stock_level < 5:
                 print 'not tracked:', wc_sku
             if wc_sku != wc_second_sku:
-                print 'not the same:', wc_sku, wc_second_sku
+                print 'WC SKU is not the same as second WC SKU:', wc_sku, wc_second_sku
         quit()
 
     if download_xero:
