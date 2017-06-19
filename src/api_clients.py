@@ -143,7 +143,7 @@ class WpClient(ApiMixin):
     def update_product(self, _id, data):
         assert isinstance(_id, int), "id must be int"
         assert isinstance(data, dict), "data must be dict"
-        return self.put("products/%d" % _id, data).json()
+        return self.api.put("products/%d" % _id, data).json()
 
 class WcClient(WCAPI, ApiMixin):
     """Wraps around the WooCommerce API and provides extra useful methods"""
