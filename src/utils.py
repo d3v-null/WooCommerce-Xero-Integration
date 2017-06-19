@@ -111,31 +111,39 @@ class DebugUtils(object):
     MESSAGE_VERBOSITY = 3
     CURRENT_VERBOSITY = 1
 
-    @staticmethod
-    def get_procedure():
+    @classmethod
+    def get_procedure(cls, skip_frames=0):
         """Gets the name of the procedure calling this method"""
-        return inspect.stack()[1][3]
-
-    @staticmethod
-    def get_caller_procedure():
-        """Gets the name of the procedure calling the procedure calling this method"""
-        return inspect.stack()[2][3]
+        skip_frames += 1
+        return inspect.stack()[skip_frames][3]
 
     @classmethod
-    def register_message(cls, message, severity=None):
+    def get_caller_procedure(cls, skip_frames=0):
+        """Gets the name of the procedure calling the procedure calling this method"""
+        skip_frames += 1
+        return cls.get_procedure(skip_frames)
+
+    @classmethod
+    def register_message(cls, message, severity=None, skip_frames=0):
         """Registers a message with any severity and prints if verbose enough"""
+        skip_frames += 1
         if severity is None:
             severity = cls.MESSAGE_VERBOSITY
         if severity <= cls.CURRENT_VERBOSITY:
-            print [
+            print " ".join([
                 SanitationUtils.coerce_bytestr(x) for x in \
-                [cls.get_caller_procedure(), message]
-            ]
+                [cls.get_caller_procedure(skip_frames), message]
+            ])
 
     @classmethod
     def register_error(cls, message):
         """Registers a message with warning severity and prints if verbose enough"""
-        cls.register_message(message, cls.ERROR_VERBOSITY)
+        cls.register_message("! %s" % message, cls.ERROR_VERBOSITY, skip_frames=1)
+
+    @classmethod
+    def register_warning(cls, message):
+        """Registers a message with warning severity and prints if verbose enough"""
+        cls.register_message("? %s" % message, cls.WARNING_VERBOSITY, skip_frames=1)
 
 class ProgressCounter(object):
     def __init__(self, total, printThreshold=1):
