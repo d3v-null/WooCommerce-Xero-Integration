@@ -339,39 +339,39 @@ def main():
                     for attr in WCProduct.report_attrs
                 ])
 
-    if args.update_wc and new_wc_products:
-        update_progress_counter = ProgressCounter(len(new_wc_products))
-        DebugUtils.register_message("Updating WC")
+    if args.update_wc
+        if new_wc_products:
+            update_progress_counter = ProgressCounter(len(new_wc_products))
+            DebugUtils.register_message("Updating WC")
 
-        for count, product in enumerate(new_wc_products):
-            update_progress_counter.maybe_print_update(count)
-            data = {"product": OrderedDict([
-                (WCAPIProduct.stock_level_key, product.stock_level),
-                (WCAPIProduct.stock_status_key, product.stock_status),
-                (WCAPIProduct.managing_stock_key, product.managing_stock)
-            ])}
+            for count, product in enumerate(new_wc_products):
+                update_progress_counter.maybe_print_update(count)
+                data = {"product": OrderedDict([
+                    (WCAPIProduct.stock_level_key, product.stock_level),
+                    (WCAPIProduct.stock_status_key, product.stock_status),
+                    (WCAPIProduct.managing_stock_key, product.managing_stock)
+                ])}
 
-            response = None
-            try:
-                response = wc_client.update_product(product.pid, data)
-            except ReadTimeout as e:
-                DebugUtils.register_warning(
-                    "request timed out, trying again after a short break"
-                )
-                sleep(10)
+                response = None
                 try:
                     response = wc_client.update_product(product.pid, data)
                 except ReadTimeout as e:
-                    DebugUtils.register_error(
-                        ("!!! API keeps timing out, "
-                         "please try again later or manually upload the CSV file")
+                    DebugUtils.register_warning(
+                        "request timed out, trying again after a short break"
                     )
-                    quit()
-            finally:
-                DebugUtils.register_message("API responeded :%s" % response)
-
-    else:
-        print "no updates being made"
+                    sleep(10)
+                    try:
+                        response = wc_client.update_product(product.pid, data)
+                    except ReadTimeout as e:
+                        DebugUtils.register_error(
+                            ("!!! API keeps timing out, "
+                             "please try again later or manually upload the CSV file")
+                        )
+                        quit()
+                finally:
+                    DebugUtils.register_message("API responeded :%s" % response)
+        else:
+            print "no updates need to be made"
 
     print "Sync complete."
 
