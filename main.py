@@ -6,7 +6,7 @@ from collections import OrderedDict
 from time import sleep
 # from woocommerce import API as WCAPI
 from pprint import pprint
-from requests import ReadTimeout
+from requests.exceptions import ReadTimeout
 
 import yaml
 from tabulate import tabulate
