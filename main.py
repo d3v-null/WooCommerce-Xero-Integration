@@ -111,7 +111,9 @@ def main():
         })
         wc_products = [wc_container_class(data) for data in wc_products_data]
 
-        if not wc_products:
+        if wc_products:
+            print "products downloaded"
+        else:
             print "it looks like there was a problem downloading products from the website."
             print "you can export the products from the website manually, and try again."
             quit()
