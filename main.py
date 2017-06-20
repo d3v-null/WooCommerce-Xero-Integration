@@ -339,7 +339,7 @@ def main():
                     for attr in WCProduct.report_attrs
                 ])
 
-    if args.update_wc
+    if args.update_wc:
         if new_wc_products:
             update_progress_counter = ProgressCounter(len(new_wc_products))
             DebugUtils.register_message("Updating WC")
