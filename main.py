@@ -112,7 +112,7 @@ def main():
         wc_products = [wc_container_class(data) for data in wc_products_data]
 
         if wc_products:
-            print "products downloaded from WC"
+            print "%d products downloaded from WC" % len(wc_products)
         else:
             print "it looks like there was a problem downloading products from the website."
             print "you can export the products from the website manually, and try again."
@@ -154,7 +154,7 @@ def main():
         xero_products_data = xero_client.get_products()
         xero_products = [XeroProduct(data) for data in xero_products_data]
         if xero_products:
-            print "products downloaded from Xero"
+            print "%d products downloaded from Xero" % len(xero_products)
         else:
             print "it looks like there was a problem downloading products from Xero."
             print "check your config and try again."
