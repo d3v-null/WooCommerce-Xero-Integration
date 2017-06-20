@@ -38,7 +38,6 @@ class WpClient(ApiMixin):
         'consumer_key':[ValidationUtils.not_none],
         'consumer_secret':[ValidationUtils.not_none],
         'url':[ValidationUtils.is_url],
-        'basic_auth':True
         # 'wp_user':[ValidationUtils.not_none],
         # 'wp_pass':[ValidationUtils.not_none],
         # 'callback':[ValidationUtils.not_none],
@@ -87,13 +86,6 @@ class WpClient(ApiMixin):
         if params is None:
             params = {}
         request_params = OrderedDict()
-        # incl_fields = params.get('core_fields', [])
-        extra_fields = []
-        if params.get('meta_fields'):
-            # request_params['filter[meta]'] = 'true'
-            extra_fields.append('product_meta')
-        # if params.get('core_fields'):
-            # request_params['fields'] = ','.join(incl_fields + extra_fields)
         for key in ['per_page', 'search', 'slug', 'sku']:
             if params.get(key):
                 request_params[key] = SanitationUtils.coerce_ascii(params[key])
@@ -133,10 +125,6 @@ class WpClient(ApiMixin):
                             if page_product_meta.get(meta_field):
                                 product['meta.'+meta_field] = page_product_meta[meta_field]
                     products.append(product)
-            elif params.get('id'):
-                print page
-                products.append(page)
-                break
         return products
 
     def update_product(self, _id, data):
