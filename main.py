@@ -339,7 +339,7 @@ def main():
                     for attr in WCProduct.report_attrs
                 ])
 
-    if args.update_wc:
+    if args.update_wc and new_wc_products:
         update_progress_counter = ProgressCounter(len(new_wc_products))
         DebugUtils.register_message("Updating WC")
 
@@ -371,7 +371,9 @@ def main():
                 DebugUtils.register_message("API responeded :%s" % response)
 
     else:
-        DebugUtils.register_message("Not updating")
+        print "no updates being made"
+
+    print "Sync complete."
 
 if __name__ == '__main__':
     main()
