@@ -136,7 +136,10 @@ class WCCSVProduct(WCProduct):
 
     @property
     def pid(self):
-        return int(super(WCCSVProduct, self).pid)
+        try:
+            return int(super(WCCSVProduct, self).pid)
+        except TypeError as exc:
+            raise Exception("could not get PID for %s: %s" % (self, exc))
 
     @property
     def stock_status(self):
