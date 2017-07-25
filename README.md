@@ -13,10 +13,16 @@ Copy the client key and secret from the api manager into a copy of the example x
 Follow instructions for generating your client key / secret pair from WooCommerce
 Copy the client key and secret from the WooCommerce into a copy of the example wc yaml config file along with the store url
 
+### Install instructions for debian-based linux
+If running ubuntu, you need to perform these extra steps:
+```bash
+sudo apt-get install python-pip python-dev libxml2-dev libxslt1-dev libz-dev libffi-dev
+```
+
 ### Set up Application dependencies
 
-Install python2, then install the dependencies with pip2:
+Install python2 and pip then install the dependencies with pip2:
 
-```
+```bash
 pip2 install -r requirements.txt
 ```
