@@ -7,3 +7,9 @@ pyjwt
 cryptography
 oauthlib=0.7.2
 pycrypto
+bs4
+wordpress-api
+requests
+oauthlib
+lxml
+six
