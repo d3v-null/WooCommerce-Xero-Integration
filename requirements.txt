@@ -3,3 +3,7 @@ tabulate==0.7.7
 woocommerce==1.2.1
 PyYAML==3.12
 pyxero
+pyjwt
+cryptography
+oauthlib=0.7.2
+pycrypto

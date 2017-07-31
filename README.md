@@ -20,3 +20,40 @@ Install python2, then install the dependencies with pip2:
 ```
 pip2 install -r requirements.txt
 ```
+
+### Fix for Ubuntu JWT
+
+If you ever see something like : 
+```
+File ...jwk.py", line 60     
+def is_sign_key(self) -> bool:
+SyntaxError: invalid syntax
+```
+
+Try this:
+```
+pip uninstall jwt
+pip install pyjwt
+```
+
+### Fix for Ubuntu OpenSSL
+
+If you ever see something like:
+```
+fatal error: openssl/opensslv.h: No such file or directory
+```
+The fix is:
+```
+sudo apt-get install python-pip python-dev libffi-dev libssl-dev libxml2-dev libxslt1-dev libjpeg8-dev zlib1g-dev
+pip install cryptography
+```
+
+### Fix for Ubuntu Cryptography
+If you see something like:
+```
+ImportError: No module named Crypto.PublicKey
+```
+the fix is:
+```shell
+pip install pycrypto
+```

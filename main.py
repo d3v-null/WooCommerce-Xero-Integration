@@ -7,10 +7,14 @@ from time import sleep
 # from woocommerce import API as WCAPI
 from pprint import pprint
 from requests.exceptions import ReadTimeout
+from pprint import pformat
+import traceback
 
 import yaml
 from tabulate import tabulate
 import argparse
+import urllib3
+urllib3.disable_warnings()
 
 if __name__ == '__main__' and __package__ is None:
     sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
@@ -61,6 +65,7 @@ def main():
     args = parser.parse_args()
 
     if args:
+	print("verbosity: %s" % args.verbosity)
         if args.verbosity > 0:
             DebugUtils.CURRENT_VERBOSITY = args.verbosity
         elif args.quiet:
@@ -69,6 +74,7 @@ def main():
             xero_config_file = args.xero_config_file
         if args.wc_config_file is not None:
             wc_config_file = args.wc_config_file
+        DebugUtils.register_message('args: %s' % pformat(vars(args)))
 
     dir_conf = 'conf'
     path_conf_wc = os.path.join(dir_conf, wc_config_file)
@@ -148,16 +154,25 @@ def main():
                 DebugUtils.register_warning('primary SKU (%s) != secondary SKU (%s) ' % (wc_sku, wc_second_sku))
 
     if args.report_wc_and_quit:
-        quit()
+        DebugUtils.register_message("quitting after report")
+	quit()
 
     if args.download_xero:
-        xero_products_data = xero_client.get_products()
+        DebugUtils.register_message("downloading xero")
+        try:
+            xero_products_data = xero_client.get_products()
+        except Exception as exc:
+            print "failed to get xero products:\n%s" % (
+                traceback.format_exc(exc)
+            )
+
         xero_products = [XeroProduct(data) for data in xero_products_data]
         if xero_products:
             print "%d products downloaded from Xero" % len(xero_products)
         else:
             print "it looks like there was a problem downloading products from Xero."
             print "check your config and try again."
+	    read()
             quit()
 
 
