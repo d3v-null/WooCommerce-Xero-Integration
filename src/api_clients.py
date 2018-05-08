@@ -49,10 +49,16 @@ class WpClient(ApiMixin):
         self.validate_kwargs(**kwargs)
         api_args = {
             'version':'v3',
-            'api':'wc-api'
+            'api':'wc-api',
+            'basic_auth': True,
+            'query_string_auth': False,
         }
-        for key in ['consumer_key', 'consumer_secret', 'url']:
-            api_args[key] = kwargs.get(key)
+        for key in [
+            'consumer_key', 'consumer_secret', 'url', 'version', 'api',
+            'basic_auth', 'query_string_auth'
+        ]:
+            if key in kwargs:
+                api_args[key] = kwargs.get(key)
         self.api = WPAPI(**api_args)
 
 
@@ -149,7 +155,7 @@ class WcClient(WCAPI, ApiMixin):
         self.validate_kwargs(**kwargs)
         super(WcClient, self).__init__(*args, **kwargs)
 
-    class WcApiPageIterator(WCAPI):
+    class WcApiPageIterator(object):
         """Creates an iterator based on a paginated wc api call"""
         def __init__(self, api, endpoint):
             self.api = api
@@ -177,7 +183,7 @@ class WcClient(WCAPI, ApiMixin):
             for link in SanitationUtils.findall_wc_links(links_str):
                 if link.get('rel') == 'next' and link.get('url'):
                     self.last_response = self.api.get(
-                        self.__get_endpoint(link['url'])
+                        self.api.__get_endpoint(link['url'])
                     )
                     return last_response_json
             raise StopIteration()
