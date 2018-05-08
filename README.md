@@ -29,9 +29,9 @@ pip2 install -r requirements.txt
 
 ### Fix for Ubuntu JWT
 
-If you ever see something like : 
+If you ever see something like :
 ```
-File ...jwk.py", line 60     
+File ...jwk.py", line 60
 def is_sign_key(self) -> bool:
 SyntaxError: invalid syntax
 ```
@@ -62,4 +62,10 @@ ImportError: No module named Crypto.PublicKey
 the fix is:
 ```shell
 pip install pycrypto
+```
+
+## Usage
+
+```
+python main.py --download-wc --download-xero --wc-config-file=wc_api.yaml --xero-config-file=xero_api.yaml
 ```
