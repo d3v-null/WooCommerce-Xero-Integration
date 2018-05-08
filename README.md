@@ -64,6 +64,12 @@ the fix is:
 pip install pycrypto
 ```
 
+## Install Instructions for Windows
+### Creating shortcut
+Create a shortcut to
+
+`C:\Windows\System32\bash.exe -c "cd /mnt/c/Users/User/Documents/GitHub/WooCommerce-Xero-Integration && ./sync.sh"`
+
 ## Usage
 
 ```
