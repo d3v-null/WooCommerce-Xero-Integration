@@ -5,7 +5,8 @@ PyYAML==3.12
 pyxero
 pyjwt
 cryptography
-oauthlib=0.7.2
+oauthlib==0.7.2
+woocommerce
 pycrypto
 bs4
 wordpress-api
