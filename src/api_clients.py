@@ -51,7 +51,8 @@ class WpClient(ApiMixin):
             'version':'v3',
             'api':'wc-api',
             'basic_auth': True,
-            'query_string_auth': False,
+            # 'query_string_auth': False,
+            'query_string_auth': True,
         }
         for key in [
             'consumer_key', 'consumer_secret', 'url', 'version', 'api',
