@@ -74,3 +74,6 @@ conf/wc_api_test_local.yaml
 *.csv
 *.swp
 sync.sh
+conf/acd_wxi.cer
+conf/privatekey_acd_wxi.pem
+conf/public_privatekey_acd_wxi.pfx

@@ -2,6 +2,7 @@
 # import json
 
 # from pprint import pprint
+import os
 from os import sys, path
 from collections import OrderedDict
 
@@ -11,7 +12,8 @@ from wordpress.helpers import UrlUtils
 
 from woocommerce import API as WCAPI
 from xero import Xero
-from xero.auth import PrivateCredentials
+from xero.auth import PrivateCredentials, OAuth2Credentials
+from xero.constants import XeroScopes
 
 if __name__ == '__main__' and __package__ is None:
     sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
@@ -266,6 +268,24 @@ class XeroClient(Xero, ApiMixin):
             rsa_key = file_key.read()
 
         credentials = PrivateCredentials(kwargs.get('consumer_key'), rsa_key)
+        super(self.__class__, self).__init__(credentials)
+
+class XeroClientV2(Xero, ApiMixin):
+    """Wraps around the Xero API and provides extra useful methods"""
+    kwarg_validations = {
+        'consumer_key':[ValidationUtils.not_none],
+        'consumer_secret':[ValidationUtils.not_none],
+        'url':[ValidationUtils.is_url],
+    }
+
+    def __init__(self, **kwargs):
+        self.validate_kwargs(**kwargs)
+        print(kwargs)
+        my_scope = [XeroScopes.ACCOUNTING_TRANSACTIONS]
+        credentials = OAuth2Credentials(kwargs.get('consumer_key'), kwargs.get('consumer_secret'), kwargs.get("url"))
+        os.environ["BROWSER"] = "/mnt/c/Program Files (x86)/Google/Chrome/Application/chrome.exe"
+        os.system("open %s" % credentials.generate_url())
+        print credentials.url
         super(self.__class__, self).__init__(credentials)
 
     def get_products(self, fields=None):

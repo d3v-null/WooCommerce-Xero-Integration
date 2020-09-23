@@ -19,7 +19,7 @@ urllib3.disable_warnings()
 if __name__ == '__main__' and __package__ is None:
     sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
 from src.utils import SanitationUtils, DebugUtils, ProgressCounter
-from src.api_clients import WcClient, XeroClient, WpClient
+from src.api_clients import WcClient, XeroClientV2, WpClient
 from src.containers import XeroProduct, WCProduct, WCAPIProduct, WCCSVProduct
 
 def main():
@@ -86,14 +86,14 @@ def main():
     path_conf_xero = os.path.join(dir_conf, xero_config_file)
     with open(path_conf_xero) as file_conf_xero:
         conf_xero = yaml.load(file_conf_xero)
-        for key in ['consumer_key', 'consumer_secret', 'key_file']:
+        for key in ['consumer_key', 'consumer_secret']:
             assert key in conf_xero, key
 
     wc_client = WpClient(
         **conf_wc
     )
 
-    xero_client = XeroClient(
+    xero_client = XeroClientV2(
         **conf_xero
     )
 
